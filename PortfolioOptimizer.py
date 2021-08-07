@@ -202,11 +202,6 @@ if __name__ == '__main__':
     if args['cascpath']:
         cascPath = args['cascpath']
 
-
-    if args['sessionlogs']:
-        logexport = args['sessionlogs']
-
-
     logging.basicConfig(filename=logpath, level=logging.DEBUG, format='%(asctime)s %(message)s')
     handler = logging.StreamHandler(sys.stdout)
     logging.getLogger().addHandler(handler)
