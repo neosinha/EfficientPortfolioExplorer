@@ -9,3 +9,6 @@ pyportfoliotracker
 pulp
 cvxpy
 cvxopt
+cherrypy
+pymongo
+paho-mqtt
