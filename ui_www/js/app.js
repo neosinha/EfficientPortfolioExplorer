@@ -3,21 +3,6 @@ var serverLocation = location.host;
 var server = "http://" + serverLocation ;
 console.log("Location: "+ server);
 
-var views = new Views();
-var websx = new WebServices();
-
-var appModel = {};
-appModel['products']    = null;
-appModel['movetable']   = null;
-appModel['inspections'] = null;
-var serialList = new Array();
-
-
-/*Fireoff Backend Requests*/
-/*websx.getmovetable();
-websx.requestproducts();
-websx.requestinspections();
-*/
 
 function appInit() {
     console.log("BackEndModel: "+ JSON.stringify(appModel['movetable']) );
@@ -34,7 +19,6 @@ function appLoad() {
 }
 
 function viewsInit() {
-    mqttInit();
 
 	views.appNavBar();
 	loadLandingView();
