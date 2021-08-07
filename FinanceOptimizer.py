@@ -7,6 +7,7 @@ from pandas_datareader import data
 
 # We define the stocks from which we want the data. You should use the ticker name of the stock.
 assets = ["AAPL", "MSFT","AMZN","GOOGL","FB","TSLA","V"]
+
 # Define the start date
 start = "2016-01-2"
 # Today's date
@@ -18,7 +19,9 @@ def YahooData(dataframe,assets_list,start_date,end_date):
     for i in assets_list:
         dataframe[i] = data.DataReader(i,data_source='yahoo',start=start_date , end=end_date)["Adj Close"]
     return dataframe
+
 df = YahooData(df_prices,assets,start,today)
+
 # We transform the data to it´s logarithmic returns
 df = np.log(df).diff()
 # Drop the first row because we loose information we the logarithmic return.
@@ -52,5 +55,48 @@ def plot_corr_matrix(corr_matrix):
     plt.ylabel('Stocks',fontsize=14)
     plt.show()
 
+print(correlation_mat)
+print("==================================")
+print(df_cov)
 
-plot_corr_matrix(correlation_mat)
+#plot_corr_matrix(correlation_mat)
+# Simulating 5000 portfolios
+num_port = 5000
+# Creating an empty array to store portfolio weights
+all_wts = np.zeros((num_port, len(df.columns)))
+# Creating an empty array to store portfolio returns
+port_returns = np.zeros((num_port))
+# Creating an empty array to store portfolio risks
+port_risk = np.zeros((num_port))
+# Creating an empty array to store portfolio sharpe ratio
+sharpe_ratio = np.zeros((num_port))
+
+for i in range(num_port):
+    wts = np.random.uniform(size = len(price_data.columns))
+    wts = wts/np.sum(wts)
+
+    # saving weights in the array
+
+    all_wts[i,:] = wts
+
+    # Portfolio Returns
+
+    port_ret = np.sum(log_ret.mean() * wts)
+    port_ret = (port_ret + 1) ** 252 - 1
+
+    # Saving Portfolio returns
+
+    port_returns[i] = port_ret
+
+
+    # Portfolio Risk
+
+    port_sd = np.sqrt(np.dot(wts.T, np.dot(cov_mat, wts)))
+
+    port_risk[i] = port_sd
+
+    # Portfolio Sharpe Ratio
+    # Assuming 0% Risk Free Rate
+
+    sr = port_ret / port_sd
+    sharpe_ratio[i] = sr

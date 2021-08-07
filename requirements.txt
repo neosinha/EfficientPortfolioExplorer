@@ -1,0 +1,11 @@
+numpy
+pandas
+matplotlib
+seaborn
+pandas-datareader
+pyportfolioopt
+pyportfolioanalysis
+pyportfoliotracker
+pulp
+cvxpy
+cvxopt
