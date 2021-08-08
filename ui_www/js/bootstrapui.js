@@ -389,7 +389,7 @@ var Bootstrap  = function () {
 		if (inputdef['append']) {
 		    console.log('Append: Data' + inputdef['append']);
 		    spanx = this.createElement('span', 'span-'+eidx);
-		    spanx.setAttribute('class', 'input-group-addon warning');
+		    spanx.setAttribute('class', 'input-group-addon btn btn-primary');
 		    spanx.innerHTML = inputdef['append']['label'];
 		    spanx.setAttribute('onclick', inputdef['append']['onclick']);
 		}
