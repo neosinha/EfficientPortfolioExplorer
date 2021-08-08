@@ -8,7 +8,7 @@ var movetable = null;
 var WebServices = function () {
 
     this.sendtickers = function(tickerdata, startdate) {
-          //var tickerdata = ['AAPL', 'SPY'];
+          var tickerdata = ['AAPL', 'SPY'];
           var datax = {'assets' : tickerdata, 'startdate' : startdate}
           $.ajax( {url : server+'/getstocktable',
                   sync: false,

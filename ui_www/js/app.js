@@ -7,6 +7,7 @@ var appmodel = {};
 appmodel['tickers'] = null;
 
 function appInit() {
+    views.hideProg();
 	var varx = "Example 2 View1"; 
 	appNavBar();
 	loadLandingView(varx);
@@ -69,7 +70,7 @@ function readTickers() {
     var stardate = document.getElementById('startingdate').value;
     console.log(stardate);
     appmodel['tickers'] = tickers;
-
+    views.showProg();
     websx.sendtickers(tickers, startingdate);
 
 }

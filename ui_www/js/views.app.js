@@ -5,10 +5,29 @@ var ui = new Bootstrap();
 
 var Views = function () {
 
+     this.showProg = function() {
+         var prog = document.getElementById('progbody');
+         //<img src="img/prog-linear.gif" class="img-rounded imcenter" >
+         var img = document.createElement('img');
+         img.setAttribute('src', 'img/stock-animate.gif');
+         img.setAttribute('class', 'img-rounded imcenter');
+
+        prog.innerHTML = '';
+        prog.appendChild(img);
+
+        $("#progress").modal("show");
+     }
+
+    this.hideProg = function() {
+         var prog = document.getElementById('progress');
+         $("#progress").modal("hide");
+    }
+
     //Response from Ticker Table
     this.loadtickertable = function(msg) {
         console.log('Ticker Table: '+msg);
         var robj = JSON.parse(msg);
+        this.hideProg();
 
         var assetimage = ui.createElement('img', 'assetperf');
         assetimage.setAttribute('src', 'images/assetperformance/'+robj['asset']);
@@ -32,7 +51,6 @@ var Views = function () {
         rarea.appendChild(ui.br());
         rarea.appendChild(corelimage);
     }
-
 
 
  }

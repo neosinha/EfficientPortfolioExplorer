@@ -47,8 +47,27 @@
  	<!--  Placeholder tags -->
 	<div class="container" id="mcontent"></div>
 	<div id="appmodal" class="modal fade" role="dialog"></div>
-  
- 	<!--  Fire off JS function upon load -->
+    <div id="progress" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <!--div class="modal-header" id="progheader">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Modal Header</h4>
+                </div-->
+
+                <div class="modal-body" id="progbody">
+                    <img src="img/stock-animate.gif" class="img-rounded imcenter" >
+                </div>
+                <!--  >div class="modal-footer" id="modalfooter">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div-->
+            </div>
+
+        </div>
+    </div>
+
+    <!--  Fire off JS function upon load -->
 	<script>
 		appInit();
 	</script>
