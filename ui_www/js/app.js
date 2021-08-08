@@ -65,6 +65,7 @@ function readTickers() {
     //console.log('Tickers: '+ tickers);
     var tickers = new Array();
     for (i=0; i < itickers.length; i++) {
+        var tkr
         tickers.push(itickers[i]['value']);
     }
     var stardate = document.getElementById('startingdate').value;
