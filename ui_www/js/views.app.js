@@ -27,7 +27,8 @@ var Views = function () {
     this.loadtickertable = function(msg) {
         console.log('Ticker Table: '+msg);
         var robj = JSON.parse(msg);
-        this.hideProg();
+
+        $("#progress").modal("hide");;
 
         var assetimage = ui.createElement('img', 'assetperf');
         assetimage.setAttribute('src', 'images/assetperformance/'+robj['asset']);
