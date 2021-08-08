@@ -1,8 +1,9 @@
-from pandas_datareader import data as web
+from pandas_datareader import data as yfindata
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from pypfopt.efficient_frontier import EfficientFrontier
 from pypfopt import risk_models
@@ -45,10 +46,36 @@ class POptmizer(object):
     @HttpServer.expose()
     def index(self):
         """
-
+        Returns the root of the web-application
         :return:
         """
         return open(os.path.join(self.staticdir, "index.html"))
+
+
+    @HttpServer.expose()
+    def getstocktable(self, assetdata=None):
+        """
+        Gets the stock tickers from frontend and loads the data-frames
+        :param assetdata:
+        :return:
+        """
+        robj = {}
+        if assetdata:
+            assetdata = json.loads(assetdata)
+            logging.info("Ticker Requested: {}".format(assetdata))
+
+            assets = assetdata['assets']
+            startdate = assetdata['startdate']
+
+            px = PortfolioMaker(assets=assets, staticdir=os.path.join(self.staticdir, 'images', 'assetperformance'))
+            assetp = px.loadstocks(priceType='Adj Close')
+            correlobj = px.covariancetable()
+
+            robj['asset'] = assetp
+            robj['covariancetable'] = correlobj
+
+        print(json.dumps(robj, indent=2))
+        return json.dumps(robj)
 
 
     def optmizer(self):
@@ -71,7 +98,7 @@ class POptmizer(object):
         df = pd.DataFrame()
         #Store the adjusted close price of stock into the data frame
         for stock in assets:
-            df[stock] = web.DataReader(stock,data_source='yahoo',start=stockStartDate , end=today)['Adj Close']
+            df[stock] = yfindata.DataReader(stock, data_source='yahoo', start=stockStartDate, end=today)['Adj Close']
 
         print(df)
         # Create the title 'Portfolio Adj Close Price History
@@ -140,8 +167,119 @@ class POptmizer(object):
         print("Funds remaining: ${:.2f}".format(leftover))
 
 
+class PortfolioMaker(object):
+
+    _assets  = []
+    _stardate =  None
+    _enddate =  None
+
+    _weights = None
+    _pd = None
+    _df = None
+
+    def __init__(self, assets, startdate=None, enddate=None, weights=None, staticdir=None):
+        """
+
+        :param assets:
+        :param startdate:
+        """
+        self._assets = assets
+        print("Assets: {}".format(assets))
+        yy = (datetime.now().year)-10
+        mm = datetime.now().month
+        dd = datetime.now().day
+
+        print("Date: {}-{}-{}".format(yy, mm, dd))
+
+        self._stardate = '{}-{}-{}'.format(yy, mm, dd)
+        if startdate:
+            self._stardate = startdate
+
+        self._enddate = datetime.today().strftime('%Y-%m-%d')
+
+        if enddate:
+            self._enddate = enddate
+
+        self._weights  = weights
+
+        #Directory for generating chart images
+        self._staticdir = os.path.join(os.getcwd(), 'ui_www', 'images')
+        if staticdir:
+            self._staticdir = staticdir
+
+        os.makedirs(staticdir, exist_ok=True)
 
 
+
+
+    def loadstocks(self, priceType=None):
+        self._df = pd.DataFrame()
+        #Store the adjusted close price of stock into the data frame
+        priceIdx = 'Adj Close'
+        if priceType:
+            priceIdx = priceType
+
+        for stock in self._assets:
+            print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
+            self._df[stock] = yfindata.DataReader(stock, data_source='yahoo',
+                                            start=self._stardate,
+                                            end=self._enddate)['Adj Close']
+
+
+        title = 'Portfolio Adj. Close Price History    '
+        #Create and plot the graph
+        plt.figure(figsize=(12.2,4.5)) #width = 12.2in, height = 4.5
+
+        # Loop through each stock and plot the Adj Close for each day
+        for c in self._df.columns.values:
+            plt.plot( self._df[c],  label=c)#plt.plot( X-Axis , Y-Axis, line_width, alpha_for_blending,  label)
+
+        plt.title(title)
+        plt.xlabel('Date',fontsize=18)
+        plt.ylabel('Adj. Price USD ($)',fontsize=18)
+        plt.legend(self._df.columns.values, loc='upper left')
+        #plt.show()
+        assetpath = os.path.join(self._staticdir, 'portfolio-{}.png'.format(int(datetime.now().timestamp())) )
+        #print(datetime.now().timestamp())
+        print("AssetPath: {}".format(assetpath))
+        plt.savefig(assetpath, transparent=True)
+        #robj = self._df.to_dict(orient='records')
+        #print(robj)
+        return os.path.basename(assetpath)
+
+    def covariancetable(self):
+        """
+        Generate and Make Covariance Table
+        :return:
+        """
+        #Show the daily simple returns, NOTE: Formula = new_price/old_price - 1
+        robj = {}
+
+        returns = self._df.pct_change()
+        cov_matrix_annual = returns.cov() * 252
+        corel_matrix = returns.corr()
+
+        #port_variance = np.dot(self._weights.T, np.dot(cov_matrix_annual, self._weights))
+        #port_volatility = np.sqrt(port_variance)
+        print(cov_matrix_annual)
+        print("=====")
+        print(corel_matrix)
+
+        plt.figure(figsize=(12.2,4.5))
+        sns.heatmap(corel_matrix, annot = True)
+        plt.title('Correlation Matrix',fontsize=18)
+        plt.xlabel('Stocks',fontsize=14)
+        plt.ylabel('Stocks',fontsize=14)
+        assetpath = os.path.join(self._staticdir, 'covariance-{}.png'.format(int(datetime.now().timestamp())) )
+        #print(datetime.now().timestamp())
+        print("AssetPath: {}".format(assetpath))
+        plt.savefig(assetpath, transparent=True)
+
+        robj['correlation'] = os.path.basename(assetpath)
+        robj['cor'] = corel_matrix.to_dict(orient='records')
+        robj['cov'] = cov_matrix_annual.to_dict(orient='records')
+
+        return robj
 
 # main code section
 if __name__ == '__main__':

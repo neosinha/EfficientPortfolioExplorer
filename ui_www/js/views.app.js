@@ -1,6 +1,42 @@
 // file holds the code which designs the UI views
 // or bigger/composite UI view elements
-ui = new Bootstrap();
+var ui = new Bootstrap();
+
+
+var Views = function () {
+
+    //Response from Ticker Table
+    this.loadtickertable = function(msg) {
+        console.log('Ticker Table: '+msg);
+        var robj = JSON.parse(msg);
+
+        var assetimage = ui.createElement('img', 'assetperf');
+        assetimage.setAttribute('src', 'images/assetperformance/'+robj['asset']);
+        assetimage.setAttribute('class', "img-responsive" );
+
+        var corelimage = ui.createElement('img', 'correlation');
+        corelimage.setAttribute('src', 'images/assetperformance/'+robj['covariancetable']['correlation']);
+        corelimage.setAttribute('class', "img-responsive" );
+
+
+
+        var tabs = new Array();
+        tabs.push({'name' : "Adjusted Close" , 'content' : ''});
+        //tabs.push({'name' : "CoRelation" ,'content' : registerForm()});
+        //tabs.push({'name' : "Portfolio" ,'content' : loadPanels()});
+
+        //var navtabs= ui.navtabs('tabbed', 'justified bg-basic text-warning', tabs);
+        var rarea = document.getElementById('resultarea');
+        rarea.appendChild(ui.br());
+        rarea.appendChild(assetimage);
+        rarea.appendChild(ui.br());
+        rarea.appendChild(corelimage);
+    }
+
+
+
+ }
+
 
 function appNavBar() {
 	navbar = ui.navbar("navarea", 'Portfolio Optimizer');
@@ -131,12 +167,32 @@ function loginView() {
 
 function tickerInput() {
     var  inpx = new Array();
+
+    var todayDate = new Date();
+    var yy = todayDate.getFullYear()-2;
+    var mm = todayDate.getMonth();
+    var dd = todayDate.getDay();
+    var today = yy +'-'+mm+'-'+dd;
+    console.log('Today: '+ today);
+
+    inpx.push({'label' : "Starting Date",
+        		'type' : "date",
+        		'name' : 'startingdate',
+        		'id' : 'startingdate',
+        		'value' : today,
+        		'placeholder': "Date"});
+
+
+
     inpx.push({'label' : "TICKERS",
     			'type' : "text",
     			'id'	: 'tickers',
     			'name' : 'tickers',
     			'append' : {'label' : 'Analyze', 'onclick' : 'readTickers();'},
     			'placeholder': "Portfolio STOCK Tickers (Eg: SPY)"});
+
+
+
 
     var form1 = ui.createForm('loginform', inpx);
 

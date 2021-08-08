@@ -1,6 +1,11 @@
 
 var loginstatus = 1 ; 
 
+var views = new Views();
+var websx = new WebServices();
+var appmodel = {};
+appmodel['tickers'] = null;
+
 function appInit() {
 	var varx = "Example 2 View1"; 
 	appNavBar();
@@ -23,18 +28,14 @@ function loadLandingView( varx ) {
         var tickinp = tickerInput();
 
 		//create tab area
-		var tabs = new Array();
-		tabs.push({'name' : "Adjusted Close" , 'content' : loginForm()});
-		tabs.push({'name' : "CoRelation" ,'content' : registerForm()});
-		tabs.push({'name' : "Portfolio" ,'content' : loadPanels()});
+        var rarea = ui.createElement('div', 'resultarea');
 		
-		var navtabs= ui.navtabs('tabbed', 'justified bg-basic text-warning', tabs);
-		
-		notifyarea = ui.createElement('div', 'notify');
+		var notifyarea = ui.createElement('div', 'notify');
 
 		jum.appendChild(tickinp);
+        jum.appendChild(rarea);
 
-		jum.appendChild(navtabs);
+		//jum.appendChild(navtabs);
 		jum.appendChild(notifyarea);
 		
 		
@@ -59,8 +60,18 @@ function initInputTags() {
 
 
 function readTickers() {
-    var tickers = document.getElementById('tickers').value;
-    console.log('Tickers: '+ tickers);
+    var itickers = document.getElementById('tickers').value;
+    //console.log('Tickers: '+ tickers);
+    var tickers = new Array();
+    for (i=0; i < itickers.length; i++) {
+        tickers.push(itickers[i]['value']);
+    }
+    var stardate = document.getElementById('startingdate').value;
+    console.log(stardate);
+    appmodel['tickers'] = tickers;
+
+    websx.sendtickers(tickers, startingdate);
+
 }
 
 
