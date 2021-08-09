@@ -41,10 +41,15 @@ function loadLandingView( varx ) {
 
 		var notifyarea = ui.createElement('div', 'notify');
 
+
 		jum.appendChild(row1);
 		//jum.appendChild(tickinp);
+		jum.appendChild(ui.hr());
 		jum.appendChild(xlarea);
+
+		jum.appendChild(ui.hr());
         jum.appendChild(rarea);
+		jum.appendChild(ui.hr());
         jum.appendChild(frontier);
 
 
