@@ -16,12 +16,12 @@ var Views = function () {
         prog.appendChild(img);
 
         $("#progress").modal("show");
-     }
+     };
 
     this.hideProg = function() {
          var prog = document.getElementById('progress');
          $("#progress").modal("hide");
-    }
+    };
 
     //Response from Ticker Table
     this.loadtickertable = function(msg) {
@@ -38,6 +38,14 @@ var Views = function () {
         corelimage.setAttribute('src', 'images/assetperformance/'+robj['covariancetable']['correlation']);
         corelimage.setAttribute('class', "img-responsive" );
 
+        var exlicon = ui.createElement('img', 'excelicon');
+        exlicon.setAttribute('onclick', 'window.open(\'images/assetperformance/'+robj['covariancetable']['msexcel']+'\');');
+        exlicon.setAttribute('class', "img-responsive pull-right" );
+        exlicon.setAttribute('src', 'img/excel-icon-48px.png');
+
+        var ricon = document.getElementById('xlarea-col1');
+        ricon.innerHTML = '';
+        ricon.appendChild(exlicon);
 
 
         var tabs = new Array();
@@ -46,12 +54,25 @@ var Views = function () {
         //tabs.push({'name' : "Portfolio" ,'content' : loadPanels()});
 
         //var navtabs= ui.navtabs('tabbed', 'justified bg-basic text-warning', tabs);
-        var rarea = document.getElementById('resultarea');
-        rarea.appendChild(ui.br());
+        var rarea = document.getElementById('resultarea-col0');
+        rarea.innerHTML = '';
+        rarea.appendChild(assetimage);
+
+         var rarea = document.getElementById('resultarea-col1');
+        rarea.innerHTML = '';
+        rarea.appendChild(corelimage);
+
+
+        /*rarea.appendChild(ui.br());
         rarea.appendChild(assetimage);
         rarea.appendChild(ui.br());
         rarea.appendChild(corelimage);
-    }
+        */
+    };
+
+    this.initView = function() {
+
+    };
 
 
  }

@@ -22,6 +22,7 @@ import time
 import cherrypy as HttpServer
 import paho.mqtt.client as mqtt
 from pymongo import MongoClient
+from typing import Any
 
 
 class POptmizer(object):
@@ -226,9 +227,10 @@ class PortfolioMaker(object):
                                             end=self._enddate)['Adj Close']
 
 
-        title = 'Portfolio Adj. Close Price History    '
+        title = 'Portfolio Adj. Close Price History'
         #Create and plot the graph
-        plt.figure(figsize=(12.2,4.5)) #width = 12.2in, height = 4.5
+        # 4:3
+        plt.figure(figsize=(12,9)) #width = 12.2in, height = 4.5
 
         # Loop through each stock and plot the Adj Close for each day
         for c in self._df.columns.values:
@@ -243,6 +245,9 @@ class PortfolioMaker(object):
         #print(datetime.now().timestamp())
         print("AssetPath: {}".format(assetpath))
         plt.savefig(assetpath, transparent=True)
+
+
+
         #robj = self._df.to_dict(orient='records')
         #print(robj)
         return os.path.basename(assetpath)
@@ -265,7 +270,7 @@ class PortfolioMaker(object):
         print("=====")
         print(corel_matrix)
 
-        plt.figure(figsize=(12.2,4.5))
+        plt.figure(figsize=(12, 9))
         sns.heatmap(corel_matrix, annot = True)
         plt.title('Correlation Matrix',fontsize=18)
         plt.xlabel('Stocks',fontsize=14)
@@ -278,6 +283,19 @@ class PortfolioMaker(object):
         robj['correlation'] = os.path.basename(assetpath)
         robj['cor'] = corel_matrix.to_dict(orient='records')
         robj['cov'] = cov_matrix_annual.to_dict(orient='records')
+
+        returns_frame = pd.concat([self._df, returns])
+        print(returns_frame.describe())
+        xlfile = os.path.join(self._staticdir, 'portfolio-{}.xlsx'.format(int(datetime.now().timestamp())))  # type:
+
+        robj['msexcel'] = os.path.basename(xlfile)
+
+        with pd.ExcelWriter(xlfile) as writer:
+            returns_frame.to_excel(writer,sheet_name='AdjustedClose')
+            returns.to_excel(writer,sheet_name='Returns')
+            corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            cov_matrix_annual.to_excel(writer, sheet_name="CovriancelMat")
 
         return robj
 

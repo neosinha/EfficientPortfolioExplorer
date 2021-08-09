@@ -691,7 +691,108 @@ var Bootstrap  = function () {
 		    myNode.removeChild(myNode.firstChild);
 		}
 	};
-	
+
+
+
+	this.addRow = function (rowid) {
+		var div = this.createElement('div', rowid);
+		div.setAttribute('class', 'row');
+
+		return div;
+	}
+
+
+	this.addRowCol = function (rowid, colcount) {
+		var div = this.createElement('div', rowid);
+		div.setAttribute('class', 'row');
+
+        var colsize = 12/colcount;
+        console.log('Column COunt: '+ colsize);
+        for (idx=0; idx < colcount; idx++) {
+            var colx = this.createElement('div', rowid+'-col'+idx);
+            colx.setAttribute('class', 'col-sm-'+colsize);
+            div.appendChild(colx);
+        }
+
+		return div;
+	}
+
+
+	this.addRowCols = function (rowid, colarr) {
+		var div = this.createElement('div', rowid);
+		div.setAttribute('class', 'row');
+
+        console.log('Column Def: '+ colsize);
+        for (idx=0; idx < colarr.length; idx++) {
+            var colsize = colarr[idx];
+            var colx = this.createElement('div', rowid+'-col'+idx);
+            colx.setAttribute('class', 'col-sm-'+colsize);
+            div.appendChild(colx);
+        }
+
+		return div;
+	};
+
+	this.addRowColContent = function (rowid, colarr) {
+		var div = this.createElement('div', rowid);
+		div.setAttribute('class', 'row');
+
+        for (idx=0; idx < colarr.length; idx++) {
+            var col = colarr[idx];
+            var colx = this.createElement('div', rowid+'-col'+idx);
+            colx.setAttribute('class', 'col-sm-'+col['size'] );
+            if (typeof col['content'] == 'string') {
+                colx.innerHTML = col['content'];
+            } else if ( typeof col['content'] == 'object')  {
+                if ( Array.isArray(col['content']) ) {
+                    for (j=0; j < col['content'].length; j++) {
+                        colx.appendChild(col['content'][j]);
+                    }
+                } else {
+                    colx.appendChild(col['content']);
+                }
+            }
+
+            div.appendChild(colx);
+        }
+
+		return div;
+	};
+
+    this.buttonInputBar = function(inputdef) {
+		var divx = document.createElement('div');
+		divx.setAttribute('class', 'input-group');
+
+
+		var inp = document.createElement('input');
+		inp.setAttribute('type', inputdef['type']);
+		inp.setAttribute('class', 'form-control form-inline');
+		inp.setAttribute('aria-label', inputdef['label']);
+		//inp.setAttribute('aria-describedby', 'button-addon2');
+		inp.setAttribute('placeholder', inputdef['placeholder']);
+		inp.setAttribute('id', inputdef['id']);
+		if (inputdef['value']) {
+		    inp.setAttribute('value', inputdef['value']);
+		}
+		divx.appendChild(inp);
+
+		var divgrp = document.createElement('div');
+		divgrp.setAttribute('class', 'input-group-btn');
+		var btn = document.createElement('button');
+		btn.setAttribute('class', 'btn btn-outline-secondary');
+		btn.setAttribute('type', 'button');
+		btn.innerHTML = inputdef['button'];
+		btn.setAttribute('onclick', inputdef['onclick']);
+
+		divgrp.appendChild(btn);
+		divx.appendChild(divgrp);
+
+		//console.log("==> ButtonGrp" + divx.getAttribute('class'));
+		return divx;
+	};
+
+
+
 	
 }; 
 
