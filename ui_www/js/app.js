@@ -72,37 +72,94 @@ function loginRegisterPage() {
 
 
 function initInputTags() {
-    var inpx = $('[name=tickers]').tagify();
-    inpx.on('add', addTags);
-
+    var inpx = $('[name=tickers]').tagify().on('add', appendTags).on('removeTag', removeTags);
     //tagify = new Tagify( input );
 
 }
+var tagNum = 0;
 
-function addTags(e) {
+
+function sliderEl (tagName, pos) {
+    var inpgrp = ui.createElement('div', 'grp-'+pos);
+    inpgrp.setAttribute('class', 'input-group');
+    var label = ui.createElement('label', 'label-'+pos);
+    label.setAttribute('for', 'weight'+pos);
+    label.innerHTML = tagName;
+
+
+
+    var sldrel = ui.createElement('input', 'weight'+pos);
+    sldrel.setAttribute('type', 'number');
+    sldrel.setAttribute('name', 'weight'+pos);
+    sldrel.setAttribute('min', '0');
+    sldrel.setAttribute('max', '100');
+
+
+    inpgrp.appendChild(label);
+    inpgrp.appendChild(sldrel);
+
+    return inpgrp;
+}
+
+var tagArray = new Array();
+
+function appendTags(e, tagName) {
     var tcx = document.getElementById('tickers').value;
-    console.log('Added: '+ tcx) + '/'+ e.detail;
+    console.log('TagActivity: '+ tcx + '/'+ e.detail + '/'+ JSON.stringify(tagName) );
+    var newtag = tagName['tag']['__tagifyTagData']['value'];
+    console.log('New Tag: '+ newtag);
+    if (newtag.includes('=')) {
+        var sldr = document.getElementById('inputrow-col1');
+        tagArray.push(newtag);
+        console.log('Arr: '+ JSON.stringify(tagArray));
+    } else {
+        confirm(newtag + '= ? Please enter "=" and a portfolio weight. Eg. SPY=50');
+    }
+
+   wtCharts();
+}
+
+function removeTags(tagName) {
+    var newtag = tagName['tag'];
+    var list = document.getElementById('tickers').value;
+    console.log('Short List: '+ list);
+    //console.dir('Removed: '+ tagName );
+    //updateWeightChart();
+    wtCharts();
+}
+
+function wtCharts() {
+
+    var wChart = document.createElement('canvas', 'weightchart');
+    wChart.setAttribute('width', '400');
+    wChart.setAttribute('height', '400');
+
+    var chartEl = document.getElementById('inputrow-col1');
+    chartEl.innerHTML = '';
+    chartEl.appendChild(wChart);
+
+    var valx = document.getElementById('tickers').value;
+    console.log("WeightData: "+valx);
+    if ((valx != null) && (valx.length > 0)) {
+        var weightData = JSON.parse(valx);
+        var labels = new Array();
+        var data = new Array();
+        for (i=0 ; i < weightData.length; i++) {
+        }
+    }
+
+
 }
 
 function readTickers() {
     var itickers = JSON.parse(document.getElementById('tickers').value);
     console.log('Tickers: '+ itickers);
 
-    var sldr = document.getElementById('inputrow-col1');
+
     var tickers = new Array();
     for (i=0; i < itickers.length; i++) {
         var tkr = itickers[i]['value'];
         tickers.push(tkr);
-
-        var sldrel = ui.createElement('input', 'weight'+i);
-        sldrel.setAttribute('type', 'number');
-        sldrel.setAttribute('name', 'weight'+i);
-        sldrel.setAttribute('min', '0');
-        sldrel.setAttribute('max', '0');
-
-        sldr.appendChild(sldrel);
-
-
     }
     var stardate = document.getElementById('startingdate').value;
     console.log("Startdate: "+stardate + '/Ticker: '+ tickers);

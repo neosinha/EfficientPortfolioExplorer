@@ -65,15 +65,30 @@ class POptmizer(object):
             assetdata = json.loads(assetdata)
             logging.info("Ticker Requested: {}".format(assetdata))
 
-            assets = assetdata['assets']
+            assetweights = assetdata['assets']
             startdate = assetdata['startdate']
+            assets = []
+            weights = []
+            for awel in assetweights:
+                assetel, weightel = awel.split("=")
+                assets.append(assetel.upper())
+                weights.append(float(weightel)/100)
+                print("Asset: {}/Weight: {}".format(assetel, weightel))
 
-            px = PortfolioMaker(assets=assets, staticdir=os.path.join(self.staticdir, 'images', 'assetperformance'))
+
+            px = PortfolioMaker(assets=assets,
+                                weights=weights,
+                                staticdir=os.path.join(self.staticdir, 'images', 'assetperformance'))
+
             assetp = px.loadstocks(priceType='Adj Close')
             correlobj = px.covariancetable()
+            returns = px.portfolioreturns()
+            eportfolio = px.efficientFrontier()
 
             robj['asset'] = assetp
             robj['covariancetable'] = correlobj
+            robj['returns'] = returns
+            robj['efficient'] = eportfolio
 
         print(json.dumps(robj, indent=2))
         return json.dumps(robj)
@@ -145,6 +160,7 @@ class POptmizer(object):
         mu = expected_returns.mean_historical_return(df)#returns.mean() * 252
         S = risk_models.sample_cov(df) #Get the sample covariance matrix
         ef = EfficientFrontier(mu, S)
+
         weights = ef.max_sharpe() #Maximize the Sharpe ratio, and get the raw weights
         cleaned_weights = ef.clean_weights()
         print(cleaned_weights) #Note the weights may have some rounding error, meaning they may not add up exactly to 1 but should be close
@@ -201,7 +217,7 @@ class PortfolioMaker(object):
         if enddate:
             self._enddate = enddate
 
-        self._weights  = weights
+        self._weights = weights
 
         #Directory for generating chart images
         self._staticdir = os.path.join(os.getcwd(), 'ui_www', 'images')
@@ -209,8 +225,6 @@ class PortfolioMaker(object):
             self._staticdir = staticdir
 
         os.makedirs(staticdir, exist_ok=True)
-
-
 
 
     def loadstocks(self, priceType=None):
@@ -260,18 +274,18 @@ class PortfolioMaker(object):
         #Show the daily simple returns, NOTE: Formula = new_price/old_price - 1
         robj = {}
 
-        returns = self._df.pct_change()
-        cov_matrix_annual = returns.cov() * 252
-        corel_matrix = returns.corr()
+        self.returns = self._df.pct_change()
+        self.cov_matrix_annual = self.returns.cov() * 252
+        self.corel_matrix = self.returns.corr()
 
         #port_variance = np.dot(self._weights.T, np.dot(cov_matrix_annual, self._weights))
         #port_volatility = np.sqrt(port_variance)
-        print(cov_matrix_annual)
-        print("=====")
-        print(corel_matrix)
+        #print(cov_matrix_annual)
+        #print("=====")
+        #print(corel_matrix)
 
         plt.figure(figsize=(12, 9))
-        sns.heatmap(corel_matrix, annot = True)
+        sns.heatmap(self.corel_matrix, annot = True)
         plt.title('Correlation Matrix',fontsize=18)
         plt.xlabel('Stocks',fontsize=14)
         plt.ylabel('Stocks',fontsize=14)
@@ -281,10 +295,10 @@ class PortfolioMaker(object):
         plt.savefig(assetpath, transparent=True)
 
         robj['correlation'] = os.path.basename(assetpath)
-        robj['cor'] = corel_matrix.to_dict(orient='records')
-        robj['cov'] = cov_matrix_annual.to_dict(orient='records')
+        robj['cor'] = self.corel_matrix.to_dict(orient='records')
+        robj['cov'] = self.cov_matrix_annual.to_dict(orient='records')
 
-        returns_frame = pd.concat([self._df, returns])
+        returns_frame = pd.concat([self._df, self.returns])
         print(returns_frame.describe())
         xlfile = os.path.join(self._staticdir, 'portfolio-{}.xlsx'.format(int(datetime.now().timestamp())))  # type:
 
@@ -292,12 +306,67 @@ class PortfolioMaker(object):
 
         with pd.ExcelWriter(xlfile) as writer:
             returns_frame.to_excel(writer,sheet_name='AdjustedClose')
-            returns.to_excel(writer,sheet_name='Returns')
-            corel_matrix.to_excel(writer, sheet_name="CorelMat")
-            corel_matrix.to_excel(writer, sheet_name="CorelMat")
-            cov_matrix_annual.to_excel(writer, sheet_name="CovriancelMat")
+            self.returns.to_excel(writer,sheet_name='Returns')
+            self.corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            self.corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            self.cov_matrix_annual.to_excel(writer, sheet_name="CovriancelMat")
 
         return robj
+
+    def portfolioreturns(self):
+        """
+        Perform calculations for expected returns and volatilty
+        :return:
+        """
+        # Assign weights to the stocks. Weights must = 1 so 0.2 for each
+        weights = np.array(self._weights)
+
+        port_variance = np.dot(weights.T, np.dot(self.cov_matrix_annual, weights))
+        port_volatility = np.sqrt(port_variance)
+
+        portfolioSimpleAnnualReturn = np.sum(self.returns.mean()*weights) * 252
+        percent_var = str(round(port_variance, 2) * 100)
+        percent_vols = str(round(port_volatility, 2) * 100)
+        percent_ret = str(round(portfolioSimpleAnnualReturn, 2)*100)
+
+        print("Expected annual return : {}%".format(percent_ret))
+        print('Annual volatility/standard deviation/risk : {}'.format(percent_vols))
+        print('Annual variance : {}'.format(percent_var))
+
+        robj = {'return' : percent_ret, 'volatility': percent_vols, 'variance': percent_var}
+
+        return robj
+
+    def efficientFrontier(self):
+        """
+        Analyze stats for Efficient Frontier
+        :return:
+        """
+        mu = expected_returns.mean_historical_return(self._df)#returns.mean() * 252
+        S = risk_models.sample_cov(self._df) #Get the sample covariance matrix
+        ef = EfficientFrontier(mu, S)
+
+        sharpe_weights = ef.max_sharpe() #Maximize the Sharpe ratio, and get the raw weights
+        cleaned_weights = ef.clean_weights()
+        print(cleaned_weights) #Note the weights may have some rounding error, meaning they may not add up exactly to 1 but should be close
+        ef.portfolio_performance(verbose=True)
+
+        from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
+        latest_prices = get_latest_prices(self._df)
+        weights = cleaned_weights
+        da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=10000)
+        allocation, leftover = da.lp_portfolio()
+
+        robj = {'allocation': str(allocation), 'leftover': str(leftover),
+                'weights': weights, 'sharpe':  sharpe_weights }
+
+        return robj
+
+
+
+
+
+
 
 # main code section
 if __name__ == '__main__':
