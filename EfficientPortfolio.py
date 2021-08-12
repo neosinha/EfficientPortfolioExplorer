@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas_datareader as web
 
-tick = ['SPY1', 'EWJ', 'BLV', 'IEV', 'EEM']
+tick = ['SPY', 'EWJ', 'BLV', 'IEV', 'EEM']
 price_data = web.get_data_yahoo(tick,
                                 start = '2011-07-01',
                                 end = '2021-07-01')['Adj Close']
@@ -16,7 +16,7 @@ print(cov_mat)
 print("=================")
 
 # Simulating 5000 portfolios
-num_port = 5000
+num_port = 100
 # Creating an empty array to store portfolio weights
 all_wts = np.zeros((num_port, len(price_data.columns)))
 # Creating an empty array to store portfolio returns
@@ -30,7 +30,6 @@ sharpe_ratio = np.zeros((num_port))
 for i in range(num_port):
     wts = np.random.uniform(size = len(price_data.columns))
     wts = wts/np.sum(wts)
-
     # saving weights in the array
 
     all_wts[i,:] = wts
@@ -56,6 +55,8 @@ for i in range(num_port):
 
     sr = port_ret / port_sd
     sharpe_ratio[i] = sr
+
+    print("{},{}, {}, {}".format(wts, port_sd, port_ret, sr))
 
 names = price_data.columns
 min_var = all_wts[port_risk.argmin()]
