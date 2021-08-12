@@ -44,12 +44,12 @@ function loadLandingView( varx ) {
 
 		jum.appendChild(row1);
 		//jum.appendChild(tickinp);
-		jum.appendChild(ui.hr());
+		//jum.appendChild(ui.hr());
 		jum.appendChild(xlarea);
 
-		jum.appendChild(ui.hr());
+		//jum.appendChild(ui.hr());
         jum.appendChild(rarea);
-		jum.appendChild(ui.hr());
+		//jum.appendChild(ui.hr());
         jum.appendChild(frontier);
 
 
@@ -136,7 +136,7 @@ function wtCharts() {
 
     var chartEl = document.getElementById('inputrow-col1');
     chartEl.innerHTML = '';
-    chartEl.appendChild(wChart);
+    //chartEl.appendChild(wChart);
 
     var valx = document.getElementById('tickers').value;
     console.log("WeightData: "+valx);
