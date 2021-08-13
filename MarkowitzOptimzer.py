@@ -43,6 +43,7 @@ class MarkowitzOptimizer(object):
         bvmf_data = pd.DataFrame()
 
         print("Assets: {}".format(assets))
+
         yy = (datetime.now().year)-10
         mm = datetime.now().month
         dd = datetime.now().day
@@ -69,11 +70,12 @@ class MarkowitzOptimizer(object):
         pfolio_volatilities = []
         pfolio_wts = []
 
-        for x in range (1000):
+        porfoliosize = 1000
+        for x in range (porfoliosize):
             weights = self.rand_weights(len(assets))
             pfolio_returns.append(np.sum(weights * log_returns.mean()) * 250)
             pfolio_volatilities.append(np.sqrt(np.dot(weights.T,np.dot(log_returns.cov() * 250, weights))))
-            pfolio_wts.append([weights])
+            pfolio_wts.append(weights)
 
         pfolio_returns = np.array(pfolio_returns)
         pfolio_volatilities = np.array(pfolio_volatilities)
@@ -82,7 +84,10 @@ class MarkowitzOptimizer(object):
         #print("Sigma(p): {}".format(pfolio_volatilities))
 
         portfolios = pd.DataFrame({'Weights' : pfolio_wts, 'Volatility': pfolio_volatilities, 'Return': pfolio_returns})
-        portfolios.plot(x='Volatility', y='Return', kind='scatter', figsize=(10, 6));
+        #portfolios.plot(x='Volatility', y='Return', kind='scatter', figsize=(10, 6));
+        #plt.scatter(results[0, :], results[1, :], c=results[2, :], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
+        colors = np.random.randint(100, size=(porfoliosize))
+        plt.scatter(pfolio_volatilities, pfolio_returns, c=colors, cmap='YlGnBu', alpha=0.3,  marker='o', s=3)
         plt.xlabel('Expected Volatility')
         plt.ylabel('Expected Return')
 
