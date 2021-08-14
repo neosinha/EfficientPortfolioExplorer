@@ -32,50 +32,49 @@ class MarkowitzOptimizer(object):
         mm = datetime.now().month
         dd = datetime.now().day
 
+        print("Date: {}-{}-{}".format(yy, mm, dd))
+        self._stardate = '{}-{}-{}'.format(yy, mm, dd)
+        self._enddate = datetime.today().strftime('%Y-%m-%d')
+
+
     def rand_weights(self, n):
         ''' Produces n random weights that sum to 1 '''
         weights = np.random.rand(n)
         weights /= np.sum(weights)
+
         return weights
 
-    def optimizer(self):
-        assets = ["SPY", "SOXL", 'BLV']
-        bvmf_data = pd.DataFrame()
+    def datahauler(self):
+        """
 
-        print("Assets: {}".format(assets))
-
-        yy = (datetime.now().year)-10
-        mm = datetime.now().month
-        dd = datetime.now().day
-
-        print("Date: {}-{}-{}".format(yy, mm, dd))
-
-        self._stardate = '{}-{}-{}'.format(yy, mm, dd)
-
-        self._enddate = datetime.today().strftime('%Y-%m-%d')
-
+        :return:
+        """
+        assets = self._assets
+        self.bvmf_data = pd.DataFrame()
         for stock in assets:
             print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
-            bvmf_data[stock] = yfindata.DataReader(stock, data_source='yahoo',
-                                                  start=self._stardate,
-                                                  end=self._enddate)['Adj Close']
+            self.bvmf_data[stock] = yfindata.DataReader(stock, data_source='yahoo',
+                                               start=self._stardate,
+                                               end=self._enddate)['Adj Close']
 
+        self._log_returns = np.log(self.bvmf_data / self.bvmf_data.shift(1))
 
-        log_returns = np.log(bvmf_data / bvmf_data.shift(1))
+    def optimizer(self):
 
         # Create a random portfolio distribution weigths, that sums 100%
-        print(self.rand_weights(len(assets)))
+        print(self.rand_weights(len(self._assets)))
 
         pfolio_returns = []
         pfolio_volatilities = []
-        pfolio_wts = []
+        pfolio_wts = pd.DataFrame(columns=self._assets)
 
-        porfoliosize = 1000
-        for x in range (porfoliosize):
-            weights = self.rand_weights(len(assets))
-            pfolio_returns.append(np.sum(weights * log_returns.mean()) * 250)
-            pfolio_volatilities.append(np.sqrt(np.dot(weights.T,np.dot(log_returns.cov() * 250, weights))))
-            pfolio_wts.append(weights)
+        porfoliosize = 1000*len(self._assets)
+        for x in range(porfoliosize):
+            weights = self.rand_weights(len(self._assets))
+            pfolio_returns.append(np.sum(weights * self._log_returns.mean()) * 252)
+            pfolio_volatilities.append(np.sqrt(np.dot(weights.T,np.dot(self._log_returns.cov() * 252, weights))))
+            #pfolio_wts.append(weights)
+            pfolio_wts.append(pd.DataFrame(weights))
 
         pfolio_returns = np.array(pfolio_returns)
         pfolio_volatilities = np.array(pfolio_volatilities)
@@ -83,7 +82,7 @@ class MarkowitzOptimizer(object):
         #print("E(Rp): {}".format(pfolio_returns))
         #print("Sigma(p): {}".format(pfolio_volatilities))
 
-        portfolios = pd.DataFrame({'Weights' : pfolio_wts, 'Volatility': pfolio_volatilities, 'Return': pfolio_returns})
+        portfolios = pd.DataFrame({'Volatility': pfolio_volatilities, 'Return': pfolio_returns})
         #portfolios.plot(x='Volatility', y='Return', kind='scatter', figsize=(10, 6));
         #plt.scatter(results[0, :], results[1, :], c=results[2, :], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
         colors = np.random.randint(100, size=(porfoliosize))
@@ -93,7 +92,7 @@ class MarkowitzOptimizer(object):
 
         xlfile = os.path.join(os.getcwd(), 'portfolio-{}.xlsx'.format(int(datetime.now().timestamp())))  # type:
         with pd.ExcelWriter(xlfile) as writer:
-            bvmf_data.to_excel(writer,sheet_name='AdjustedClose')
+            self.bvmf_data.to_excel(writer,sheet_name='AdjustedClose')
             portfolios.to_excel(writer, sheet_name="Portfolio")
 
         plt.show()
@@ -103,7 +102,8 @@ if __name__ == '__main__':
     port = 9009
     www = os.path.join(os.getcwd(), 'ui_www')
 
-    mkw = MarkowitzOptimizer(assets=['AAPL, SPY'])
+    mkw = MarkowitzOptimizer(assets=['AAPL', 'SPY', 'BLV'])
+    mkw.datahauler()
     mkw.optimizer()
 
 

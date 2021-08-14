@@ -83,105 +83,18 @@ class POptmizer(object):
             assetp = px.loadstocks(priceType='Adj Close')
             correlobj = px.covariancetable()
             returns = px.portfolioreturns()
-            eportfolio = px.efficientFrontier()
+            sharperatio= px.sharpeRatio()
+            efficientFront = px.efficientPortfolio()
 
             robj['asset'] = assetp
             robj['covariancetable'] = correlobj
             robj['returns'] = returns
-            robj['efficient'] = eportfolio
+            robj['shareratio'] = sharperatio
+
 
         print(json.dumps(robj, indent=2))
         return json.dumps(robj)
 
-
-    def optmizer(self):
-        """
-
-        :return:
-        """
-        plt.style.use('fivethirtyeight')
-        assets =  ["FB", "AMZN", "AAPL", "NFLX", "GOOG"]
-
-        # Assign weights to the stocks. Weights must = 1 so 0.2 for each
-        weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
-
-        #Get the stock starting date
-        stockStartDate = '2013-01-01'
-        # Get the stocks ending date aka todays date and format it in the form YYYY-MM-DD
-        today = datetime.today().strftime('%Y-%m-%d')
-
-        #Create a dataframe to store the adjusted close price of the stocks
-        df = pd.DataFrame()
-        #Store the adjusted close price of stock into the data frame
-        for stock in assets:
-            df[stock] = yfindata.DataReader(stock, data_source='yahoo', start=stockStartDate, end=today)['Adj Close']
-
-        print(df)
-        # Create the title 'Portfolio Adj Close Price History
-        title = 'Portfolio Adj. Close Price History    '
-        #Get the stocks
-        my_stocks = df
-        #Create and plot the graph
-        plt.figure(figsize=(12.2,4.5)) #width = 12.2in, height = 4.5
-
-        # Loop through each stock and plot the Adj Close for each day
-        for c in my_stocks.columns.values:
-            plt.plot( my_stocks[c],  label=c)#plt.plot( X-Axis , Y-Axis, line_width, alpha_for_blending,  label)
-
-        plt.title(title)
-        plt.xlabel('Date',fontsize=18)
-        plt.ylabel('Adj. Price USD ($)',fontsize=18)
-        plt.legend(my_stocks.columns.values, loc='upper left')
-        #plt.show()
-        plt.savefig('portfolioAdj.png', transparent=True)
-
-
-        #Show the daily simple returns, NOTE: Formula = new_price/old_price - 1
-        returns = df.pct_change()
-        cov_matrix_annual = returns.cov() * 252
-        corel_matrix = returns.corr()
-
-
-        port_variance = np.dot(weights.T, np.dot(cov_matrix_annual, weights))
-        port_volatility = np.sqrt(port_variance)
-        print(cov_matrix_annual)
-        print("=====")
-        print(corel_matrix)
-
-        portfolioSimpleAnnualReturn = np.sum(returns.mean()*weights) * 252
-        percent_var = str(round(port_variance, 2) * 100) + '%'
-        percent_vols = str(round(port_volatility, 2) * 100) + '%'
-        percent_ret = str(round(portfolioSimpleAnnualReturn, 2)*100)+'%'
-
-        print("Expected annual return : "+ percent_ret)
-        print('Annual volatility/standard deviation/risk : '+percent_vols)
-        print('Annual variance : '+percent_var)
-
-        mu = expected_returns.mean_historical_return(df)#returns.mean() * 252
-        S = risk_models.sample_cov(df) #Get the sample covariance matrix
-        ef = EfficientFrontier(mu, S)
-
-        weights = ef.max_sharpe() #Maximize the Sharpe ratio, and get the raw weights
-        cleaned_weights = ef.clean_weights()
-        print(cleaned_weights) #Note the weights may have some rounding error, meaning they may not add up exactly to 1 but should be close
-        ef.portfolio_performance(verbose=True)
-
-        from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
-        latest_prices = get_latest_prices(df)
-        weights = cleaned_weights
-        da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=15000)
-        allocation, leftover = da.lp_portfolio()
-
-        #print(da.weights)
-        wt = 0.0
-
-        for p_wt in da.weights:
-            wt += p_wt[1]
-            print(p_wt[0], p_wt[1], wt)
-
-
-        print("Discrete allocation:", allocation)
-        print("Funds remaining: ${:.2f}".format(leftover))
 
 
 class PortfolioMaker(object):
@@ -248,15 +161,18 @@ class PortfolioMaker(object):
 
         # Loop through each stock and plot the Adj Close for each day
         for c in self._df.columns.values:
-            plt.plot( self._df[c],  label=c)#plt.plot( X-Axis , Y-Axis, line_width, alpha_for_blending,  label)
+            plt.plot( self._df[c],  label=c)
+            #plt.plot( X-Axis , Y-Axis, line_width, alpha_for_blending,  label)
 
         plt.title(title)
         plt.xlabel('Date',fontsize=18)
         plt.ylabel('Adj. Price USD ($)',fontsize=18)
         plt.legend(self._df.columns.values, loc='upper left')
+
         #plt.show()
         assetpath = os.path.join(self._staticdir, 'portfolio-{}.png'.format(int(datetime.now().timestamp())) )
         #print(datetime.now().timestamp())
+
         print("AssetPath: {}".format(assetpath))
         plt.savefig(assetpath, transparent=True)
 
@@ -337,7 +253,7 @@ class PortfolioMaker(object):
 
         return robj
 
-    def efficientFrontier(self):
+    def sharpeRatio(self):
         """
         Analyze stats for Efficient Frontier
         :return:
@@ -349,7 +265,8 @@ class PortfolioMaker(object):
         sharpe_weights = ef.max_sharpe() #Maximize the Sharpe ratio, and get the raw weights
         cleaned_weights = ef.clean_weights()
         print(cleaned_weights) #Note the weights may have some rounding error, meaning they may not add up exactly to 1 but should be close
-        ef.portfolio_performance(verbose=True)
+        sharpe_pf = ef.portfolio_performance(verbose=True)
+        print("Sharpe: {}".format(sharpe_pf))
 
         from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
         latest_prices = get_latest_prices(self._df)
@@ -363,7 +280,54 @@ class PortfolioMaker(object):
         return robj
 
 
+    def rand_weights(self, n):
+        ''' Produces n random weights that sum to 1 '''
+        weights = np.random.rand(n)
+        weights /= np.sum(weights)
 
+        return weights
+
+
+    def efficientPortfolio(self):
+        """
+
+        :return:
+        """
+        # Create a random portfolio distribution weigths, that sums 100%
+        print(self.rand_weights(len(self._assets)))
+
+        pfolio_returns = []
+        pfolio_volatilities = []
+        pfolio_wts = pd.DataFrame(columns=self._assets)
+
+        porfoliosize = 1000*len(self._assets)
+        for x in range(porfoliosize):
+            weights = self.rand_weights(len(self._assets))
+            pfolio_returns.append(np.sum(weights * self.returns.mean()) * 252)
+            pfolio_volatilities.append(np.sqrt(np.dot(weights.T,np.dot(self.cov_matrix_annual * 252, weights))))
+            #pfolio_wts.append(weights)
+            pfolio_wts.append(pd.DataFrame(weights))
+
+        pfolio_returns = np.array(pfolio_returns)
+        pfolio_volatilities = np.array(pfolio_volatilities)
+
+        #print("E(Rp): {}".format(pfolio_returns))
+        #print("Sigma(p): {}".format(pfolio_volatilities))
+
+        portfolios = pd.DataFrame({'Volatility': pfolio_volatilities, 'Return': pfolio_returns})
+        #portfolios.plot(x='Volatility', y='Return', kind='scatter', figsize=(10, 6));
+        #plt.scatter(results[0, :], results[1, :], c=results[2, :], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
+        plt.figure(figsize=(12, 9))
+        colors = np.random.randint(100, size=(porfoliosize))
+        plt.scatter(pfolio_volatilities, pfolio_returns, c=colors, cmap='YlGnBu', alpha=0.3,  marker='o', s=3)
+        #plt.scatter()
+        plt.xlabel('Expected Volatility')
+        plt.ylabel('Expected Return')
+
+        assetpath = os.path.join(self._staticdir, 'eportfolio-{}.png'.format(int(datetime.now().timestamp())) )
+
+        print("AssetPath: {}".format(assetpath))
+        plt.savefig(assetpath, transparent=True)
 
 
 
