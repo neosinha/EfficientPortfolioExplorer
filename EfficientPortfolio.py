@@ -3,7 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas_datareader as web
 
+
 tick = ['SPY', 'EWJ', 'BLV', 'IEV', 'EEM']
+tick = ['AXP', 'BAC', 'C', 'CME', 'GS', 'JPM', 'MA', 'UBS', 'V', 'WFC']
+
 price_data = web.get_data_yahoo(tick,
                                 start = '2011-07-01',
                                 end = '2021-07-01')['Adj Close']

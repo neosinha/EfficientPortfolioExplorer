@@ -76,7 +76,7 @@ class POptmizer(object):
                 print("Asset: {}/Weight: {}".format(assetel, weightel))
 
 
-            px = PortfolioMaker(assets=assets,
+            px = PortfolioMaker(portfolioassets=assets,
                                 weights=weights,
                                 staticdir=os.path.join(self.staticdir, 'images', 'assetperformance'))
 
@@ -107,14 +107,14 @@ class PortfolioMaker(object):
     _pd = None
     _df = None
 
-    def __init__(self, assets, startdate=None, enddate=None, weights=None, staticdir=None):
+    def __init__(self, portfolioassets, startdate=None, enddate=None, weights=None, staticdir=None):
         """
 
-        :param assets:
+        :param portfolioassets:
         :param startdate:
         """
-        self._assets = assets
-        print("Assets: {}".format(assets))
+        self._assets = portfolioassets
+        print("Assets: {}".format(portfolioassets))
         yy = (datetime.now().year)-10
         mm = datetime.now().month
         dd = datetime.now().day
@@ -137,7 +137,8 @@ class PortfolioMaker(object):
         if staticdir:
             self._staticdir = staticdir
 
-        os.makedirs(staticdir, exist_ok=True)
+        print("Static dir: {}".format(self._staticdir))
+        os.makedirs(self._staticdir, exist_ok=True)
 
 
     def loadstocks(self, priceType=None):
@@ -228,6 +229,30 @@ class PortfolioMaker(object):
             self.cov_matrix_annual.to_excel(writer, sheet_name="CovriancelMat")
 
         return robj
+
+    def marketModel(self, stock="SPY"):
+        """
+
+        :param stock:
+        :return:
+        """
+        self.market = pd.DataFrame()
+        print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
+        self.market = yfindata.DataReader(stock, data_source='yahoo',
+                                          start=self._stardate,
+                                          end=self._enddate)['Adj Close']
+
+        self.mktreturns = self.market.pct_change()
+
+    def riskFreeModel(self, rfm=0.7):
+        """
+        Risk Free Model
+        :param rfm:
+        :return:
+        """
+        self.rfm = pd.DataFrame()
+
+
 
     def portfolioreturns(self):
         """
@@ -335,7 +360,7 @@ class PortfolioMaker(object):
 # main code section
 if __name__ == '__main__':
     port = 9009
-    www = os.path.join(os.getcwd(), 'ui_www')
+    staticwww = os.path.join(os.getcwd(), 'ui_www')
     ipaddr = '0.0.0.0'
     dbip = 'data.sinhamobility.com:28018'
 
@@ -355,7 +380,7 @@ if __name__ == '__main__':
     ap.add_argument("-d", "--dbaddress", required=False, default=dbip,
                     help="Database Address to start HTTPServer")
 
-    ap.add_argument("-s", "--static", required=False, default=www,
+    ap.add_argument("-s", "--static", required=False, default=staticwww,
                     help="Static directory where WWW files are present")
 
     ap.add_argument("-c", "--cascpath", required=False, default=cascPath,
@@ -409,9 +434,12 @@ if __name__ == '__main__':
         'tools.staticdir.dir': staticwww}
     }
 
-    HttpServer.quickstart(POptmizer(staticdir=staticwww,
-                                     database=dbip, logexport=logexport,
-                                    ),
-                          '/', conf)
+    #HttpServer.quickstart(POptmizer(staticdir=staticwww,
+    #                                  database=dbip, logexport=logexport,
+    #                                ),
+    #                      '/', conf)
 
+    pm = PortfolioMaker(portfolioassets=['AAPL', 'TSLA'])
+    ldstks = pm.loadstocks(priceType='Adj Close')
+    print("LD: {}".format(ldstks))
 

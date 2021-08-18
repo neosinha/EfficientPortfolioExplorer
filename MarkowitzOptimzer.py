@@ -44,6 +44,23 @@ class MarkowitzOptimizer(object):
 
         return weights
 
+    def modelMarket(self, mkt='SPY'):
+        """
+
+        :param mkt:
+        :return:
+        """
+        self.mkt =  pd.DataFrame()
+        stock = 'SPY'
+        if mkt:
+            stock = mkt
+
+        self.bvmf_data[stock] = yfindata.DataReader(stock, data_source='yahoo',
+                                                    start=self._stardate,
+                                                    end=self._enddate)['Adj Close']
+
+
+
     def datahauler(self):
         """
 
@@ -51,11 +68,14 @@ class MarkowitzOptimizer(object):
         """
         assets = self._assets
         self.bvmf_data = pd.DataFrame()
+
         for stock in assets:
             print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
             self.bvmf_data[stock] = yfindata.DataReader(stock, data_source='yahoo',
                                                start=self._stardate,
                                                end=self._enddate)['Adj Close']
+
+
 
         self._log_returns = np.log(self.bvmf_data / self.bvmf_data.shift(1))
 
@@ -67,6 +87,8 @@ class MarkowitzOptimizer(object):
         pfolio_returns = []
         pfolio_volatilities = []
         pfolio_wts = pd.DataFrame(columns=self._assets)
+        covmat = self._log_returns.cov()*252
+
 
         porfoliosize = 1000*len(self._assets)
         for x in range(porfoliosize):
@@ -90,10 +112,14 @@ class MarkowitzOptimizer(object):
         plt.xlabel('Expected Volatility')
         plt.ylabel('Expected Return')
 
-        xlfile = os.path.join(os.getcwd(), 'portfolio-{}.xlsx'.format(int(datetime.now().timestamp())))  # type:
+        dtstr = str(datetime.now()).split('.')[0]
+        dtstr = dtstr.replace(' ', '-').replace(':', '-')
+        xlfile = os.path.join(os.getcwd(), 'portfolio-{}.xlsx'.format(dtstr))  # type:
         with pd.ExcelWriter(xlfile) as writer:
             self.bvmf_data.to_excel(writer,sheet_name='AdjustedClose')
             portfolios.to_excel(writer, sheet_name="Portfolio")
+            covmat.to_excel(writer, sheet_name='Covariance')
+            covmat.to_excel(writer, sheet_name='Covariance')
 
         plt.show()
 
@@ -103,6 +129,7 @@ if __name__ == '__main__':
     www = os.path.join(os.getcwd(), 'ui_www')
 
     mkw = MarkowitzOptimizer(assets=['AAPL', 'SPY', 'BLV'])
+    #mkw = MarkowitzOptimizer(assets=['AXP', 'BAC', 'C', 'CME', 'GS', 'JPM', 'MA', 'UBS', 'V', 'WFC'])
     mkw.datahauler()
     mkw.optimizer()
 
