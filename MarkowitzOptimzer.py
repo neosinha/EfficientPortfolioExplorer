@@ -108,7 +108,7 @@ class MarkowitzOptimizer(object):
         #portfolios.plot(x='Volatility', y='Return', kind='scatter', figsize=(10, 6));
         #plt.scatter(results[0, :], results[1, :], c=results[2, :], cmap='YlGnBu', marker='o', s=10, alpha=0.3)
         colors = np.random.randint(100, size=(porfoliosize))
-        plt.scatter(pfolio_volatilities, pfolio_returns, c=colors, cmap='YlGnBu', alpha=0.3,  marker='o', s=3)
+        plt.scatter(pfolio_volatilities, pfolio_returns, c=colors, cmap='viridis', alpha=0.3,  marker='o', s=3)
         plt.xlabel('Expected Volatility')
         plt.ylabel('Expected Return')
 
