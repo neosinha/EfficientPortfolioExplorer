@@ -107,15 +107,24 @@ class PortfolioMaker(object):
     _pd = None
     _df = None
 
-    def __init__(self, portfolioassets, startdate=None, enddate=None, weights=None, staticdir=None):
+    def __init__(self, portfolioassets, startdate=None, enddate=None, weights=None, staticdir=None, numyears=1):
         """
 
         :param portfolioassets:
         :param startdate:
+        :param enddate:
+        :param weights:
+        :param staticdir:
+        :param numyears:
         """
+
         self._assets = portfolioassets
         print("Assets: {}".format(portfolioassets))
-        yy = (datetime.now().year)-10
+        num_years = 10
+        if numyears:
+            num_years = numyears
+
+        yy = (datetime.now().year)- num_years
         mm = datetime.now().month
         dd = datetime.now().day
 
@@ -141,18 +150,28 @@ class PortfolioMaker(object):
         os.makedirs(self._staticdir, exist_ok=True)
 
 
-    def loadstocks(self, priceType=None):
+    def loadstocks(self, priceType=None, interval=None):
+        """
+
+        :param priceType:
+        :param interval:
+        :return:
+        """
         self._df = pd.DataFrame()
         #Store the adjusted close price of stock into the data frame
         priceIdx = 'Adj Close'
+        datainterval = 'd'
+        if interval:
+            datainterval = interval
+
         if priceType:
             priceIdx = priceType
 
         for stock in self._assets:
             print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
             self._df[stock] = yfindata.DataReader(stock, data_source='yahoo',
-                                            start=self._stardate,
-                                            end=self._enddate)['Adj Close']
+                                                    start=self._stardate,
+                                                    end=self._enddate)['Adj Close']
 
 
         title = 'Portfolio Adj. Close Price History'
@@ -170,18 +189,38 @@ class PortfolioMaker(object):
         plt.ylabel('Adj. Price USD ($)',fontsize=18)
         plt.legend(self._df.columns.values, loc='upper left')
 
+
         #plt.show()
         assetpath = os.path.join(self._staticdir, 'portfolio-{}.png'.format(int(datetime.now().timestamp())) )
-        #print(datetime.now().timestamp())
+
 
         print("AssetPath: {}".format(assetpath))
-        plt.savefig(assetpath, transparent=True)
 
 
 
         #robj = self._df.to_dict(orient='records')
         #print(robj)
         return os.path.basename(assetpath)
+
+    def excelwriter(self):
+        """
+        Writes to Excel
+        :return:
+        """
+        assetstr = '-'.join(self._assets)
+        dtstr = str(datetime.now()).split('.')[0]
+        dtstr = dtstr.replace(' ', '-').replace(':', '-')
+
+        xlfile = os.path.join(self._staticdir, 'excel', 'portfolio-{}-{}.xlsx'.format(assetstr, dtstr))
+
+        with pd.ExcelWriter(xlfile) as writer:
+            self._df.to_excel(writer,sheet_name='AdjustedClose')
+            self.returns.to_excel(writer,sheet_name='Returns')
+            self.corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            self.corel_matrix.to_excel(writer, sheet_name="CorelMat")
+            self.cov_matrix_annual.to_excel(writer, sheet_name="CovriancelMat")
+
+
 
     def covariancetable(self):
         """
@@ -260,6 +299,13 @@ class PortfolioMaker(object):
         :return:
         """
         # Assign weights to the stocks. Weights must = 1 so 0.2 for each
+
+        if self._weights is None:
+            wt = 1.0/len(self._assets)
+            self._weights = []
+            for ast in self._assets:
+                self._weights.append(wt)
+
         weights = np.array(self._weights)
 
         port_variance = np.dot(weights.T, np.dot(self.cov_matrix_annual, weights))
@@ -305,6 +351,9 @@ class PortfolioMaker(object):
         return robj
 
 
+
+
+
     def rand_weights(self, n):
         ''' Produces n random weights that sum to 1 '''
         weights = np.random.rand(n)
@@ -333,8 +382,10 @@ class PortfolioMaker(object):
             #pfolio_wts.append(weights)
             pfolio_wts.append(pd.DataFrame(weights))
 
-        pfolio_returns = np.array(pfolio_returns)
-        pfolio_volatilities = np.array(pfolio_volatilities)
+        self.pfolio_returns = np.array(pfolio_returns)
+        self.pfolio_volatilities = np.array(pfolio_volatilities)
+
+
 
         #print("E(Rp): {}".format(pfolio_returns))
         #print("Sigma(p): {}".format(pfolio_volatilities))
@@ -438,8 +489,20 @@ if __name__ == '__main__':
     #                                  database=dbip, logexport=logexport,
     #                                ),
     #                      '/', conf)
+    #assetp = px.loadstocks(priceType='Adj Close')
+    #correlobj = px.covariancetable()
+    #returns = px.portfolioreturns()
+    #sharperatio= px.sharpeRatio()
+    #efficientFront = px.efficientPortfolio()
 
-    pm = PortfolioMaker(portfolioassets=['AAPL', 'TSLA'])
-    ldstks = pm.loadstocks(priceType='Adj Close')
+    #pm = PortfolioMaker(portfolioassets=['AAPL', 'TSLA'], numyears=1)
+    pm = PortfolioMaker(portfolioassets=['AXP', 'BAC', 'C', 'CME', 'GS', 'JPM', 'MA', 'UBS', 'V', 'WFC'], numyears=10)
+    ldstks = pm.loadstocks(priceType='Adj Close', interval='w')
+    corerel = pm.covariancetable()
+    returns = pm.portfolioreturns()
+    sharpe = pm.sharpeRatio()
+    print("Sharpe Ratio: {}".format(sharpe))
+    eff = pm.efficientPortfolio()
+
     print("LD: {}".format(ldstks))
 

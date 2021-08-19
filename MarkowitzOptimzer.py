@@ -128,8 +128,9 @@ if __name__ == '__main__':
     port = 9009
     www = os.path.join(os.getcwd(), 'ui_www')
 
-    mkw = MarkowitzOptimizer(assets=['AAPL', 'SPY', 'BLV'])
+    #mkw = MarkowitzOptimizer(assets=['AAPL', 'SPY', 'BLV'])
     #mkw = MarkowitzOptimizer(assets=['AXP', 'BAC', 'C', 'CME', 'GS', 'JPM', 'MA', 'UBS', 'V', 'WFC'])
+    mkw = MarkowitzOptimizer(assets=['DJ',	'BAC',	'JPM', 'C'])
     mkw.datahauler()
     mkw.optimizer()
 
