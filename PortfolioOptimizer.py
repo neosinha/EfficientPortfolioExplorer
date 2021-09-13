@@ -504,5 +504,7 @@ if __name__ == '__main__':
     print("Sharpe Ratio: {}".format(sharpe))
     eff = pm.efficientPortfolio()
 
+
+
     print("LD: {}".format(ldstks))
 

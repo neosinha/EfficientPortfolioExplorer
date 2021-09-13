@@ -7,8 +7,14 @@ pyportfolioopt
 pyportfolioanalysis
 pyportfoliotracker
 pulp
+yfinance
+yahoo_earnings_calendar
 cvxpy
 cvxopt
 cherrypy
 pymongo
 paho-mqtt
+beautifulsoup4
+vaderSentiment
+stocknews
+
