@@ -149,12 +149,30 @@ class PortfolioMaker(object):
         print("Static dir: {}".format(self._staticdir))
         os.makedirs(self._staticdir, exist_ok=True)
 
+    def set_startdate(self, numyears=10):
+        """
 
-    def loadstocks(self, priceType=None, interval=None):
+        :param numyears:
+        :return:
+        """
+        num_years = 10
+        if numyears:
+            num_years = numyears
+
+        yy = (datetime.now().year)- num_years
+        mm = datetime.now().month
+        dd = datetime.now().day
+
+        print("Date: {}-{}-{}".format(yy, mm, dd))
+        self._stardate = '{}-{}-{}'.format(yy, mm, dd)
+
+
+    def loadstocks(self, priceType=None, interval=None, years=None):
         """
 
         :param priceType:
         :param interval:
+        :param years:
         :return:
         """
         self._df = pd.DataFrame()
@@ -166,6 +184,10 @@ class PortfolioMaker(object):
 
         if priceType:
             priceIdx = priceType
+
+        if years:
+            self.set_startdate(numyears=years)
+
 
         for stock in self._assets:
             print('Asset: {}, {}, {}'.format(stock, self._stardate, self._enddate))
